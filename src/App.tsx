@@ -9,6 +9,7 @@ import Products from "./pages/Products";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Login from "./pages/Login";
+import SignIn from "./pages/SignIn";
 
 
 function App() {
@@ -82,6 +83,7 @@ function App() {
                                     />
                                   }
           />
+          <Route path="/signin" element={<SignIn />} />
 
           {/* Agrega otras rutas si tienes más páginas */}
         </Routes>

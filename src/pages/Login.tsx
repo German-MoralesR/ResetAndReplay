@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import "../styles/loginStyles.css";
 
@@ -90,7 +90,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             {errors.login && <p className="text-danger text-center">{errors.login}</p>}
 
             <button type="submit">Ingresar</button>
-            <a href="registrate.html" className="btn btn-primary volver-btn" role="button">Registrarse</a>
+            <Link to="/signin" className="btn btn-primary volver-btn" role="button">Registrarse</Link>
         </form>
     );
 }

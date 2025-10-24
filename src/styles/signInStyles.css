@@ -1,0 +1,130 @@
+:root{
+  --bg: #ECE8F2;
+  --panel: #F6F4F9;
+  --accent-1: #6B4B92;
+  --accent-2: #9FB6D8;
+  --accent-3: #E07A5F;
+  --muted: #3f3f46;
+  --card-bg: #ffffff;
+  --shadow: 0 10px 30px rgba(15,15,30,0.08);
+}
+
+/* Reset ligero para que no haya choques con bootstrap */
+body {
+  font-family: 'Press Start 2P', monospace;
+  background: linear-gradient(180deg,var(--bg), #F3F1F6);
+  color:var(--muted);
+  margin:0;
+}
+
+/* Contenedor centrado (tu HTML usa .abs-center) */
+.abs-center {
+  min-height: 78vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+/* Formulario */
+.form {
+  width:100%;
+  max-width:760px;
+  background: linear-gradient(180deg,var(--panel), var(--card-bg));
+  padding:22px;
+  border-radius:12px;
+  box-shadow: var(--shadow);
+  border: 2px solid rgba(107,75,146,0.06);
+}
+
+/* Cada bloque input (ya tienes .form-input en HTML) */
+.form-input{
+  margin-bottom:12px;
+}
+.form-input label{
+  display:block;
+  font-family:'Orbitron',sans-serif;
+  color:var(--accent-1);
+  font-size:12px;
+  margin-bottom:8px;
+}
+.form-input input[type="text"],
+.form-input input[type="password"],
+.form-input input[type="email"]{
+  width:100%;
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid rgba(0,0,0,0.06);
+  background:white;
+  font-family:'Press Start 2P', monospace;
+  font-size:12px;
+  outline:none;
+  transition:box-shadow .12s, border-color .12s;
+}
+.form-input input:focus{
+  border-color: var(--accent-1);
+  box-shadow: 0 8px 24px rgba(107,75,146,0.06);
+}
+
+/* Checkbox terms: mayor separación y estilo */
+.form-input.termCond{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.form-input.termCond label{ margin:0; }
+.form-input.termCond input[type="checkbox"]{
+  width:18px; height:18px;
+  accent-color: var(--accent-1);
+}
+
+/* Mensaje de error */
+.mensajeError{
+  color:var(--accent-3);
+  font-size:11px;
+  margin-top:6px;
+  min-height:16px;
+}
+
+/* Botones: sobrescribimos .btn.btn-primary bootstrap para look SNES */
+.btn.btn-primary,
+input[type="submit"].btn.btn-primary,
+a.volver-btn {
+  background: linear-gradient(90deg, var(--accent-1), #5a3b8a) !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 10px 14px !important;
+  border-radius: 10px !important;
+  font-family: 'Orbitron', sans-serif !important;
+  font-size: 12px !important;
+  display: inline-block;
+  text-decoration: none;
+}
+.btn.btn-primary:hover { transform: translateY(-2px); opacity:0.95; }
+
+/* Acciones (tu HTML tiene .form-actions d-flex) */
+.form-actions {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+/* Estilos específicos para campos pequeños (teléfono) */
+.form-input.telefono input{
+  max-width:240px;
+}
+
+/* Responsive */
+@media (max-width:720px){
+  .form { padding:16px; }
+  .form-actions { flex-direction:column; align-items:stretch; gap:8px; }
+  .form-input.telefono input{ max-width:100%; }
+}
+
+.form-actions.d-flex {
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+}
