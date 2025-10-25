@@ -1,12 +1,26 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
+
+import "../styles/productsStyles.css";
+
+interface Product {
+    id: number;
+    title: string;
+    price: number;
+    desc: string;
+    image: string;
+    category: string;
+}
 
 const Products: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
-    const [sortOrder, setSortOrder] = useState('featured');
-    const [categoryFilter, setCategoryFilter] = useState('all');
+  const [sortOrder, setSortOrder] = useState('featured');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const products = [
+    const products: Product[] = [
         { id: 1, title: "Super Mario World (SNES)", price: 50000, desc: "Cartucho original, en buen estado.", image: "snes.jpg", category: "juegos" },
         { id: 2, title: "Controller SNES - Repro", price: 25000, desc: "Control réplica con cable largo.", image: "controlSNES.jpg", category: "accesorios" },
         { id: 3, title: "PlayStation 1 - Slim", price: 80000, desc: "Consola PS1 edición Slim.", image: "ps1.jpg", category: "consolas" },
@@ -34,7 +48,16 @@ const Products: React.FC = () => {
             return 0; // 'featured' or any other case
         });
 
+    const openModal = (product: Product) => {
+        console.log("Producto seleccionado:", product);
+        setSelectedProduct(product);
+        setIsModalOpen(true);
+    };
 
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setSelectedProduct(null);
+    };
     return (
       <main className="container">
         <section className="products">
@@ -88,13 +111,28 @@ const Products: React.FC = () => {
                   <h4 className="product-title">{product.title}</h4>
                   <p className="price">${product.price.toLocaleString()}</p>
                   <div className="card-actions">
-                    <button className="btn view-btn">Ver</button>
+                    <button className="btn view-btn" onClick={() => openModal(product)}>Ver</button>
                     <button className="btn outline add-cart">Añadir</button>
                   </div>
                 </div>
               </article>
             ))}
           </div>
+
+          {isModalOpen && selectedProduct && createPortal(
+            (
+              <div className="modal" role="dialog" aria-modal="true" onClick={closeModal} style={{ display: 'flex' }}> {/* <- estilo necesario por alguna razon, siendo que esta aplicado en la hoja de estilos, pero sin hacerlo aqui este no aparece */}
+                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                  <button className="close" onClick={closeModal} aria-label="Cerrar">&times;</button>
+                  <img src={`/images/${selectedProduct.image}`} alt={selectedProduct.title} />
+                  <h4>{selectedProduct.title}</h4>
+                  <p>{selectedProduct.desc}</p>
+                  <p>Precio: ${selectedProduct.price.toLocaleString()}</p>
+                </div>
+              </div>
+            ),
+            document.body
+          )}
         </section>
       </main>
     );
