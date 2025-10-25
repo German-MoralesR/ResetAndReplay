@@ -14,6 +14,14 @@ const Products: React.FC = () => {
         { id: 6, title: "Game Boy Color • Bundle", price: 70000, desc: "Game Boy Color + cargador + juego.", image: "gbColor.jpg" },
         { id: 7, title: "Mega Drive — Headset", price: 150000, desc: "Auriculares retro compatibles.", image: "segaVR.jpg" },
         { id: 8, title: "Cartucho Pokémon Snap (N64)", price: 45000, desc: "Cartucho original, probado.", image: "pokemonSnap.jpg" },
+        { id: 9, title: "Pokemon Gold (GBC)", price: 55000, desc: "Cartucho Pokémon Gold para GBC.", image: "pokemonGold.jpg" },
+        { id:10, title: "Pokemon Silver (GBC)", price: 55000, desc: "Cartucho Pokémon Silver para GBC.", image: "pokemonSilver.jpg" },
+        { id:11, title: "Pokemon Crystal (GBC)", price: 60000, desc: "Cartucho Pokémon Crystal para GBC.", image: "pokemonCrystal.jpg" },
+        { id:12, title: "The Legend of Zelda: Majora's Mask (N64)", price: 65000, desc: "Cartucho N64 en excelente estado.", image: "tlozMajorasMask.jpg" },
+        { id:13, title: "Donkey Kong Country (SNES)", price: 50000, desc: "Cartucho original de Donkey Kong.", image: "dkCountry.jpg" },
+        { id:14, title: "Street Fighter II (SNES)", price: 55000, desc: "Cartucho original de Street Fighter II.", image: "streetFighter2.jpg" },
+        { id:15, title: "Consola Super Nintendo Entertainment System (SNES)", price: 120000, desc: "Consola SNES en buen estado de funcionamiento.", image: "consolaSnes.jpg" },
+        { id:16, title: "Super Mario World (SNES)", price: 50000, desc: "Cartucho original de Super Mario World para SNES.", image: "superMarioWorld.jpg" },
     ];
 
     const filteredProducts = products

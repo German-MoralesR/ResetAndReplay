@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import SignIn from "./pages/SignIn";
 
 
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate(); // para navegación interna
