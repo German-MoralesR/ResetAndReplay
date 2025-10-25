@@ -18,6 +18,18 @@
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
+/* Mantener el footer siempre abajo */
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* El footer se empuja al final del contenedor flex */
+.container > .site-footer {
+  margin-top: auto;
+}
+
 @keyframes logo-spin {
   from {
     transform: rotate(0deg);
@@ -39,4 +51,36 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* Ajustar el tamaño de las imágenes en el carrito */
+.cart-item img.cart-item-image {
+  width: 120px; /* Cambia el tamaño según sea necesario */
+  height: auto; /* Mantiene la proporción de la imagen */
+}
+
+/* Centrar la cantidad y los botones de agregar y restar */
+.quantity-controls {
+  display: flex;
+  justify-content: center; /* Centra los elementos */
+  align-items: center; /* Alinea verticalmente */
+  gap: 8px; /* Espacio entre los botones y la cantidad */
+}
+
+/* Alinear el botón de eliminar a la derecha */
+.cart-item {
+  display: flex;
+  justify-content: space-between; /* Espacia los elementos */
+  align-items: center; /* Alinea verticalmente */
+}
+
+.remove-btn {
+  margin-left: auto; /* Empuja el botón hacia la derecha */
+  background: var(--accent-3);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 10px;
+  padding: 6px 8px;
+  cursor: pointer;
 }

@@ -12,7 +12,11 @@ interface Product {
     category: string;
 }
 
-const Products: React.FC = () => {
+interface ProductsProps {
+  addToCart: (product: { id: number; title: string; price: number; image: string }) => void;
+}
+
+const Products: React.FC<ProductsProps> = ({ addToCart }) => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState('featured');
@@ -112,7 +116,17 @@ const Products: React.FC = () => {
                   <p className="price">${product.price.toLocaleString()}</p>
                   <div className="card-actions">
                     <button className="btn view-btn" onClick={() => openModal(product)}>Ver</button>
-                    <button className="btn outline add-cart">Añadir</button>
+                    <button 
+                      className="btn outline add-cart" 
+                      onClick={() => addToCart({
+                        id: product.id,
+                        title: product.title,
+                        price: product.price,
+                        image: product.image
+                      })}
+                    >
+                      Añadir
+                    </button>
                   </div>
                 </div>
               </article>

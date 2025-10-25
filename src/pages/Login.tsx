@@ -52,7 +52,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       setErrors({});// limpia errores
       //Llama a la función que viene de App.tsx para actualizar el estado global isLoggedIn y mostrar “Cerrar sesión” en la navbar.
       if (onLoginSuccess) onLoginSuccess();
-      navigate("/home"); // redirige al Home
+      navigate("/"); // redirige al Home
     } else {
       setErrors({ login: "Correo o contraseña incorrectos" }); // Si las credenciales no coinciden, asigna un error general de login.
     }
