@@ -1,0 +1,195 @@
+/* --- Paleta SNES y variables --- */
+:root{
+  --bg: #ECE8F2;           /* lavanda suave */
+  --panel: #F6F4F9;        /* tarjeta clara */
+  --accent-1: #6B4B92;     /* púrpura principal */
+  --accent-2: #9FB6D8;     /* azul secundario */
+  --accent-3: #E07A5F;     /* naranja/rojo detalles */
+  --muted: #5a5860;        /* texto secundario */
+  --card-bg: #ffffff;
+  --glass: rgba(255,255,255,0.6);
+  --radius: 12px;
+  --shadow: 0 10px 30px rgba(15,15,30,0.08);
+  --max-width: 1100px;
+}
+
+/* --- Reset/Base --- */
+*{box-sizing:border-box}
+html,body{height:100%; margin:0; font-family:'Press Start 2P', monospace; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; background: linear-gradient(180deg,var(--bg), #F3F1F6); color:var(--muted);}
+
+/* --- Header (coincide con main) --- */
+.header{
+  backdrop-filter: blur(6px);
+  background: linear-gradient(90deg, rgba(107,75,146,0.06), rgba(159,182,216,0.02));
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid rgba(107,75,146,0.06);
+}
+.header .brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.header .brand .logo{
+  width:48px;
+  height:48px;
+  object-fit:contain;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08));
+}
+.header .brand h1{
+  font-family:'Orbitron', sans-serif;
+  font-size:18px;
+  margin:0;
+  color:var(--accent-1);
+}
+
+/* layout container for header */
+.header .nav, .header { padding: 12px 20px; }
+.header .nav{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:flex-end;
+}
+.header .nav a{
+  text-decoration:none;
+  color:var(--muted);
+  padding:8px 10px;
+  border-radius:8px;
+  font-size:12px;
+}
+.header .nav a.active,
+.header .nav a:hover{
+  background:var(--accent-2);
+  color:#fff;
+}
+
+/* --- Main / Section --- */
+main { max-width: var(--max-width); margin: 22px auto; padding: 0 20px; }
+.section { 
+    padding: 6px 0 40px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+ }
+
+/* Section title (coincide con styles del main) */
+.section h2{
+  font-family:'Orbitron', sans-serif;
+  font-size:28px;
+  color:var(--accent-1);
+  margin:0 0 12px 0;
+  text-align: center;
+}
+
+/* --- Contact container & form --- */
+.contact-form {
+  background: linear-gradient(180deg,var(--panel), var(--card-bg));
+  padding: 18px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(0,0,0,0.04);
+  max-width: 720px;
+  margin: 12px auto 0 auto;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+/* labels and inputs */
+.contact-form label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  color: var(--accent-1);
+  display:block;
+  margin-bottom:6px;
+}
+
+.contact-form input[type="text"],
+.contact-form input[type="email"],
+.contact-form textarea {
+  font-family:'Press Start 2P', monospace;
+  font-size:12px;
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid rgba(0,0,0,0.06);
+  background: #fff;
+  color:#222;
+  outline:none;
+  transition: box-shadow .12s ease, border-color .12s ease;
+}
+
+.contact-form textarea {
+  resize:vertical;
+  min-height:120px;
+}
+
+/* focus effect */
+.contact-form input:focus,
+.contact-form textarea:focus {
+  border-color: var(--accent-1);
+  box-shadow: 0 8px 30px rgba(107,75,146,0.06);
+}
+
+/* submit button */
+.contact-form .btn {
+  display:inline-block;
+  padding:10px 14px;
+  border-radius:10px;
+  border:none;
+  cursor:pointer;
+  font-family:'Orbitron', sans-serif;
+  font-size:12px;
+  color:#fff;
+  background: linear-gradient(90deg, var(--accent-1), #5a3b8a);
+  transition: transform .12s ease, opacity .12s ease;
+}
+.contact-form .btn:hover { transform: translateY(-2px); }
+
+/* response text */
+.form-response {
+  font-size:12px;
+  margin-top:8px;
+  min-height:18px;
+  color:var(--accent-3);
+  text-align:center;
+}
+
+/* --- Footer --- */
+.footer {
+  margin-top:28px;
+  padding:18px 20px;
+  background: linear-gradient(90deg, rgba(107,75,146,0.03), rgba(159,182,216,0.02));
+  border-top:1px solid rgba(0,0,0,0.04);
+  text-align:center;
+  color:var(--muted);
+}
+
+/* --- Responsiveness --- */
+@media (min-width:1000px){
+  .header { padding:14px 28px; }
+  .header .nav { gap:16px; }
+}
+
+@media (max-width:880px){
+  .header .nav { flex-wrap:wrap; justify-content:center; gap:8px; padding-top:8px; }
+  .contact-form { margin: 12px 14px; }
+  .section h2 { text-align:center; }
+}
+
+@media (max-width:480px){
+  .contact-form input, .contact-form textarea { font-size:11px; padding:9px; }
+  .contact-form .btn { font-size:11px; padding:9px; }
+  .header .brand h1 { font-size:16px; }
+}
+
+/* --- Pequeños detalles opcionales --- */
+/* Si quieres destacar el icono del logo en la brand */
+.header .brand img { border-radius:8px; }
+
+/* Placeholder styling (mejora legibilidad) */
+.contact-form input::placeholder,
+.contact-form textarea::placeholder {
+  color: #9a9aa2;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+}

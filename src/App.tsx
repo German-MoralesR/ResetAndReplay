@@ -10,6 +10,7 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Login from "./pages/Login";
 import SignIn from "./pages/SignIn";
+import Contact from "./pages/Contact";
 
 
 
@@ -60,8 +61,7 @@ function App() {
           </div>
           <Link to="/home" className={location.pathname === "/home" ? "active" : ""}>Inicio</Link>
           <Link to="/products" className={location.pathname === "/products" ? "active" : ""}>Productos</Link>
-          <a href="#categorias">Categorías</a>
-          <a href="../../Evaluacion/Contacto/contacto.html">Contacto</a>
+          <Link to= "/contact" className={location.pathname === "/contact" ? "active" : ""}>Contacto</Link>
 
           <div className="header-actions">
             
@@ -85,6 +85,7 @@ function App() {
                                   }
           />
           <Route path="/signin" element={<SignIn />} />
+          <Route path="/contact" element={<Contact />} />
 
           {/* Agrega otras rutas si tienes más páginas */}
         </Routes>

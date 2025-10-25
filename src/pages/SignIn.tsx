@@ -2,7 +2,6 @@
 import React, { type FormEvent, useState, type ChangeEvent } from 'react';
 
 import "../styles/signInStyles.css";
-import { Link } from "react-router-dom";
 
 const SignIn: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -247,6 +246,7 @@ const SignIn: React.FC = () => {
         
         <div className="form-actions d-flex">
           <button type="submit" className="btn btn-primary">Registrarse</button>
+          <button type="button" className="btn btn-secondary" onClick={() => window.history.back()}>Volver</button>
         </div>
       </form>
     </div>
