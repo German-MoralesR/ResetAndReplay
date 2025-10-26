@@ -47,7 +47,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     if (!validate()) return; // si hay errores, no sigue
 
     // validación de credenciales de prueba
-    if (email === "vega@gmail.com" && password === "1234") {
+    if (email === "admin@gmail.com" && password === "1234") {
       localStorage.setItem("isLoggedIn", "true");//Guarda en el localStorage del navegador que el usuario está logueado.
       setErrors({});// limpia errores
       //Llama a la función que viene de App.tsx para actualizar el estado global isLoggedIn y mostrar “Cerrar sesión” en la navbar.

@@ -149,8 +149,9 @@ const SignIn: React.FC = () => {
     <div className="abs-center">
       <form className="form" onSubmit={validar}>
         <div className="form-input">
-          <label>Nombre</label>
+          <label htmlFor="nombre">Nombre</label>
           <input
+            id="nombre"
             type="text"
             name="nombre"
             value={formData.nombre}
@@ -161,8 +162,9 @@ const SignIn: React.FC = () => {
         </div>
 
         <div className="form-input">
-          <label>Correo</label>
+          <label htmlFor="correo">Correo</label>
           <input
+            id="correo"
             type="email"
             name="correo"
             value={formData.correo}
@@ -173,8 +175,9 @@ const SignIn: React.FC = () => {
         </div>
 
         <div className="form-input">
-          <label>Usuario</label>
+          <label htmlFor="nombre_usu">Usuario</label>
           <input
+            id="nombre_usu"
             type="text"
             name="nombre_usu"
             value={formData.nombre_usu}
@@ -185,8 +188,9 @@ const SignIn: React.FC = () => {
         </div>
 
         <div className="form-input">
-          <label>Contraseña</label>
+          <label htmlFor="password">Contraseña</label>
           <input
+            id="password"
             type="password"
             name="password"
             value={formData.password}
@@ -197,8 +201,9 @@ const SignIn: React.FC = () => {
         </div>
 
         <div className="form-input">
-          <label>Confirmar Contraseña</label>
+          <label htmlFor="cPassword">Confirmar Contraseña</label>
           <input
+            id="cPassword"
             type="password"
             name="cPassword"
             value={formData.cPassword}
@@ -209,8 +214,9 @@ const SignIn: React.FC = () => {
         </div>
 
         <div className="form-input telefono">
-          <label>Teléfono</label>
+          <label htmlFor="telefono">Teléfono</label>
           <input
+            id="telefono"
             type="tel"
             name="telefono"
             value={formData.telefono}
@@ -223,8 +229,9 @@ const SignIn: React.FC = () => {
         </div>
 
         <div className="form-input">
-          <label>Fecha de Nacimiento</label>
+          <label htmlFor="fec_nac">Fecha de Nacimiento</label>
           <input
+            id="fec_nac"
             type="date"
             name="fec_nac"
             value={formData.fec_nac}
@@ -235,12 +242,13 @@ const SignIn: React.FC = () => {
 
         <div className="form-input termCond">
           <input
+            id="termCond"
             type="checkbox"
             name="termCond"
             checked={formData.termCond}
             onChange={handleInputChange}
           />
-          <label>Acepto los términos y condiciones</label>
+          <label htmlFor="termCond">Acepto los términos y condiciones</label>
           {errors.termCond && <div className="mensajeError">{errors.termCond}</div>}
         </div>
         
