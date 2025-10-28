@@ -13,6 +13,7 @@ import Privacy from "./pages/Privacy";
 import Login from "./pages/Login";
 import SignIn from "./pages/SignIn";
 import Contact from "./pages/Contact";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
 
 interface CartItem {
   product: {
@@ -81,6 +82,17 @@ function App() {
     setIsLoggedIn(false);
     navigate("/"); // redirige al Home sin recargar la página
   };
+
+  const procederPago = () => {
+    // Lógica para proceder al pago
+    navigate("/CheckoutSuccess");
+
+    // Vaciar el carrito después de proceder al pago
+    setCart([]);
+
+    // Cerrar el modal del carrito
+    setIsCartOpen(false);
+  };
   return (
     <div className = "container">
         
@@ -141,6 +153,7 @@ function App() {
           />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/CheckoutSuccess" element={<CheckoutSuccess />} />
 
           {/* Agrega otras rutas si tienes más páginas */}
         </Routes>
@@ -173,7 +186,7 @@ function App() {
                   <div className="cart-total">
                     <strong>Total: ${cart.reduce((total, item) => total + (item.product.price * item.quantity), 0).toLocaleString()}</strong>
                   </div>
-                  <button className="btn checkout-btn">Proceder al pago</button>
+                  <button className="btn checkout-btn" onClick={procederPago}>Proceder al pago</button>
                 </>
               )}
             </div>

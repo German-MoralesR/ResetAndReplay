@@ -49,7 +49,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart }) => {
         .sort((a, b) => {
             if (sortOrder === 'price-asc') return a.price - b.price;
             if (sortOrder === 'price-desc') return b.price - a.price;
-            return 0; // 'featured' or any other case
+            return 0; // Por defecto, no ordenar (destacados)
         });
 
     const openModal = (product: Product) => {
