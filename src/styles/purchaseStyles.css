@@ -1,0 +1,14 @@
+.purchase-history-page { padding: 2rem 0; max-width: 900px; margin: 0 auto; }
+.purchases-list { display: grid; gap: 1rem; }
+.purchase-card { border: 1px solid #e6e6e6; padding: 1rem; border-radius: 8px; background: #fff; }
+.purchase-header { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; }
+.muted { color:#777; font-size:0.9rem; }
+.purchase-status { margin-top:0.5rem; padding:0.25rem 0.6rem; border-radius:14px; font-weight:600; font-size:0.85rem; }
+.status-completado { background:#d4edda; color:#155724; }
+.status-pendiente { background:#fff3cd; color:#856404; }
+.status-cancelado { background:#f8d7da; color:#721c24; }
+.purchase-actions { margin-top:0.75rem; display:flex; gap:0.5rem; }
+.purchase-items { margin-top:1rem; background:#f8f9fa; padding:0.75rem; border-radius:6px; }
+.no-purchases { text-align:center; color:#666; padding:2rem; }
+.btn.small { padding:0.4rem 0.7rem; font-size:0.9rem; cursor:pointer; }
+.btn.outline { background:transparent; border:1px solid #667eea; color:#667eea; border-radius:6px; }

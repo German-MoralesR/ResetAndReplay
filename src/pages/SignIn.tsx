@@ -1,33 +1,32 @@
-
 import React, { type FormEvent, useState, type ChangeEvent } from 'react';
-
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import "../styles/signInStyles.css";
 
 const SignIn: React.FC = () => {
   const [formData, setFormData] = useState({
     nombre: '',
     correo: '',
-    nombre_usu: '',
     password: '',
     cPassword: '',
-    telefono: '',
-    fec_nac: '',
-    termCond: false
+    telefono: ''
   });
 
   const [errors, setErrors] = useState({
     nombre: '',
     correo: '',
-    nombre_usu: '',
     password: '',
     cPassword: '',
     telefono: '',
-    fec_nac: '',
-    termCond: ''
+    submit: ''
   });
 
+  const [loading, setLoading] = useState(false);
+  const API_URL = "http://localhost:8081";
+  const navigate = useNavigate();
+
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     
     // Limpiar números para el campo teléfono
     if (name === 'telefono') {
@@ -41,7 +40,7 @@ const SignIn: React.FC = () => {
 
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
     }));
   };
 
@@ -70,31 +69,6 @@ const SignIn: React.FC = () => {
       newErrors.correo = '';
     }
 
-    // Validar usuario
-    if (formData.nombre_usu.length < 4 || formData.nombre_usu.length > 20 || formData.nombre_usu.trim() === '') {
-      newErrors.nombre_usu = 'Usuario debe contener 4 a 20 caracteres';
-      todoOk = false;
-    } else {
-      newErrors.nombre_usu = '';
-    }
-
-    // Validar fecha de nacimiento
-    if (formData.fec_nac) {
-      const today = new Date();
-      const birth = new Date(formData.fec_nac);
-      let age = today.getFullYear() - birth.getFullYear();
-      const m = today.getMonth() - birth.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-        age--;
-      }
-      if (age < 18) {
-        newErrors.fec_nac = 'Debes ser mayor de 18 años para registrarte';
-        todoOk = false;
-      } else {
-        newErrors.fec_nac = '';
-      }
-    }
-
     // Validar contraseña
     if (formData.password.length < 8) {
       newErrors.password = 'La contraseña debe contener al menos 8 caracteres';
@@ -111,7 +85,7 @@ const SignIn: React.FC = () => {
       newErrors.cPassword = '';
     }
 
-    // Validar teléfono
+    // Validar teléfono (opcional pero si se ingresa debe ser válido)
     if (formData.telefono && (formData.telefono.length < 8 || formData.telefono.length > 12)) {
       newErrors.telefono = 'El teléfono debe tener entre 8 y 12 números';
       todoOk = false;
@@ -119,35 +93,52 @@ const SignIn: React.FC = () => {
       newErrors.telefono = '';
     }
 
-    // Validar términos y condiciones
-    if (!formData.termCond) {
-      newErrors.termCond = 'Debe aceptar los términos y condiciones';
-      todoOk = false;
-    } else {
-      newErrors.termCond = '';
-    }
-
     setErrors(newErrors);
 
     if (todoOk) {
-      alert('¡Se ha registrado correctamente!');
-      setFormData({
-        nombre: '',
-        correo: '',
-        nombre_usu: '',
-        password: '',
-        cPassword: '',
-        telefono: '',
-        fec_nac: '',
-        termCond: false
-      });
+      handleSubmit();
     }
   };
 
-  // ...existing code...
+  const handleSubmit = () => {
+    setLoading(true);
+    const payload = {
+      nombre: formData.nombre,
+      correo: formData.correo,
+      password: formData.password,
+      telefono: formData.telefono || null
+    };
+
+    axios.post(`${API_URL}/usuarios`, payload)
+      .then(resp => {
+        console.log("Usuario registrado:", resp.data);
+        setErrors({ ...errors, submit: '' });
+        alert('¡Se ha registrado correctamente!');
+        setFormData({
+          nombre: '',
+          correo: '',
+          password: '',
+          cPassword: '',
+          telefono: ''
+        });
+        navigate("/login");
+      })
+      .catch(err => {
+        console.error("Error al registrar:", err);
+        if (err.response && err.response.status === 400) {
+          setErrors({ ...errors, submit: err.response.data.message || "El correo ya está registrado" });
+        } else {
+          setErrors({ ...errors, submit: "No se pudo conectar con el servicio de registro" });
+        }
+      })
+      .finally(() => setLoading(false));
+  };
+
   return (
     <div className="abs-center">
       <form className="form" onSubmit={validar}>
+        <h2>Registrarse</h2>
+
         <div className="form-input">
           <label htmlFor="nombre">Nombre</label>
           <input
@@ -172,19 +163,6 @@ const SignIn: React.FC = () => {
             placeholder="Correo"
           />
           {errors.correo && <div className="mensajeError">{errors.correo}</div>}
-        </div>
-
-        <div className="form-input">
-          <label htmlFor="nombre_usu">Usuario</label>
-          <input
-            id="nombre_usu"
-            type="text"
-            name="nombre_usu"
-            value={formData.nombre_usu}
-            onChange={handleInputChange}
-            placeholder="Usuario"
-          />
-          {errors.nombre_usu && <div className="mensajeError">{errors.nombre_usu}</div>}
         </div>
 
         <div className="form-input">
@@ -214,7 +192,7 @@ const SignIn: React.FC = () => {
         </div>
 
         <div className="form-input telefono">
-          <label htmlFor="telefono">Teléfono</label>
+          <label htmlFor="telefono">Teléfono (Opcional)</label>
           <input
             id="telefono"
             type="tel"
@@ -228,38 +206,17 @@ const SignIn: React.FC = () => {
           {errors.telefono && <div className="mensajeError">{errors.telefono}</div>}
         </div>
 
-        <div className="form-input">
-          <label htmlFor="fec_nac">Fecha de Nacimiento</label>
-          <input
-            id="fec_nac"
-            type="date"
-            name="fec_nac"
-            value={formData.fec_nac}
-            onChange={handleInputChange}
-          />
-          {errors.fec_nac && <div className="mensajeError">{errors.fec_nac}</div>}
-        </div>
-
-        <div className="form-input termCond">
-          <input
-            id="termCond"
-            type="checkbox"
-            name="termCond"
-            checked={formData.termCond}
-            onChange={handleInputChange}
-          />
-          <label htmlFor="termCond">Acepto los términos y condiciones</label>
-          {errors.termCond && <div className="mensajeError">{errors.termCond}</div>}
-        </div>
+        {errors.submit && <div className="mensajeError text-center">{errors.submit}</div>}
         
         <div className="form-actions d-flex">
-          <button type="submit" className="btn btn-primary">Registrarse</button>
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? 'Registrando...' : 'Registrarse'}
+          </button>
           <button type="button" className="btn btn-secondary" onClick={() => window.history.back()}>Volver</button>
         </div>
       </form>
     </div>
   );
-// ...existing code...
-}
-export default SignIn;
+};
 
+export default SignIn;

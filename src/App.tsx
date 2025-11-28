@@ -14,6 +14,11 @@ import Login from "./pages/Login";
 import SignIn from "./pages/SignIn";
 import Contact from "./pages/Contact";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
+import Profile from './pages/Profile';
+import PurchaseHistory from './pages/PurchaseHistory';
+import Checkout from './pages/Checkout';
+import Inventory from './pages/Inventory';
+
 
 interface CartItem {
   product: {
@@ -27,8 +32,10 @@ interface CartItem {
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const navigate = useNavigate(); // para navegación interna
   const location = useLocation();
 
@@ -68,20 +75,81 @@ function App() {
   // Calcular total de items en el carrito
   const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0);
 
-  // Verificar sesión guardada
+  const getIsAdminFromStorage = () => {
+    try {
+      const raw = localStorage.getItem('user');
+      if (!raw) return false;
+      const u = JSON.parse(raw);
+      
+      // Acceder al id_rol desde el objeto rol
+      const roleId = u?.rol?.id_rol;
+      console.log('DEBUG: u =', u, 'roleId =', roleId);
+      
+      return Number(roleId) === 1; // id_rol === 1 es admin
+    } catch (e) {
+      console.error('Error en getIsAdminFromStorage:', e);
+      return false;
+    }
+  };
+
+  // Verificar sesión guardada AL MONTAR
   useEffect(() => {
     const storedLogin = localStorage.getItem("isLoggedIn");
     if (storedLogin === "true") {
       setIsLoggedIn(true);
     }
+    const adminStatus = getIsAdminFromStorage();
+    setIsAdmin(adminStatus);
+    console.log('App mounted: isAdmin =', adminStatus);
+  }, []);
+
+    // escuchar cambios en el evento "storage" de localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const adminStatus = getIsAdminFromStorage();
+      setIsAdmin(adminStatus);
+      console.log('Storage changed: isAdmin =', adminStatus);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   // Función para cerrar sesión
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setIsLoggedIn(false);
-    navigate("/"); // redirige al Home sin recargar la página
+    setIsAdmin(false);
+    setIsUserMenuOpen(false);
+    navigate("/");
   };
+
+  const handleProfileClick = () => {
+    setIsUserMenuOpen(false);
+    navigate("/profile");
+  };
+
+  // Cerrar menú al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const userMenuBtn = document.getElementById("user-menu-btn");
+      const userDropdown = document.getElementById("user-dropdown");
+      
+      if (userMenuBtn && userDropdown && 
+          !userMenuBtn.contains(event.target as Node) && 
+          !userDropdown.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    if (isUserMenuOpen) {
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
+    }
+  }, [isUserMenuOpen]);
+
 
   const procederPago = () => {
     // Lógica para proceder al pago
@@ -104,14 +172,35 @@ function App() {
                   <Link className="nav-link" to="/login">Iniciar Sesion</Link>
                 </li>
               ) : (
-                <li className="nav-item">
+                <li className="nav-item user-menu-container">
                   <button
-                    onClick={handleLogout}
-                    className="btn btn-outline-light ms-2"
+                    id="user-menu-btn"
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="btn btn-outline-light ms-2 user-menu-btn"
                     style={{ borderRadius: "20px", padding: "5px 15px", fontSize: "13px" }}
+                    aria-expanded={isUserMenuOpen}
+                    aria-haspopup="true"
                   >
-                    Cerrar sesión
+                    ⚙️ Mi Cuenta
                   </button>
+                  
+                  {isUserMenuOpen && (
+                    <div id="user-dropdown" className="user-dropdown-menu">
+                      <button 
+                        className="dropdown-item"
+                        onClick={handleProfileClick}
+                      >
+                        👤 Ver Perfil
+                      </button>
+                      <hr className="dropdown-divider" />
+                      <button 
+                        className="dropdown-item logout-item"
+                        onClick={handleLogout}
+                      >
+                        🚪 Cerrar Sesión
+                      </button>
+                    </div>
+                  )}
                 </li>
               )}
           </div>
@@ -121,6 +210,11 @@ function App() {
           </div>
           <Link to="/" className={location.pathname === "/" ? "active" : ""}>Inicio</Link>
           <Link to="/products" className={location.pathname === "/products" ? "active" : ""}>Productos</Link>
+          {isAdmin && (
+            <Link to="/inventory" className={location.pathname === "/inventory" ? "active" : ""}>
+              Inventario
+            </Link>
+          )}
           <Link to= "/contact" className={location.pathname === "/contact" ? "active" : ""}>Contacto</Link>
 
           <div className="header-actions">
@@ -146,6 +240,10 @@ function App() {
                                       onLoginSuccess={() => {
                                         localStorage.setItem("isLoggedIn", "true");
                                         setIsLoggedIn(true);
+                                        // Actualizar isAdmin inmediatamente después de login
+                                        const adminStatus = getIsAdminFromStorage();
+                                        setIsAdmin(adminStatus);
+                                        console.log('After login: isAdmin =', adminStatus, 'user =', JSON.parse(localStorage.getItem('user') || '{}'));
                                         navigate("/");
                                       }}
                                     />
@@ -154,14 +252,21 @@ function App() {
           <Route path="/signin" element={<SignIn />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/CheckoutSuccess" element={<CheckoutSuccess />} />
-
-          {/* Agrega otras rutas si tienes más páginas */}
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/historial" element={<PurchaseHistory />} />
+          <Route path="/checkout" element={
+            <Checkout 
+              cart={cart} 
+              onCheckoutSuccess={() => setCart([])}
+            />
+          } />
+          <Route path="/inventory" element={<Inventory />} />
         </Routes>
 
           {/* Modal del Carrito */}
         {isCartOpen && createPortal(
-          <div className="modal" role="dialog" aria-modal="true" onClick={() => setIsCartOpen(false)} style={{ display: 'flex' }}>
-            <div className="modal-content cart-modal" onClick={e => e.stopPropagation()}>
+          <div className="cart-modal" onClick={() => setIsCartOpen(false)}>
+            <div className="cart-content" onClick={(e) => e.stopPropagation()}>
               <button className="close" onClick={() => setIsCartOpen(false)}>&times;</button>
               <h3>Carrito de Compras</h3>
               {cart.length === 0 ? (
@@ -186,12 +291,21 @@ function App() {
                   <div className="cart-total">
                     <strong>Total: ${cart.reduce((total, item) => total + (item.product.price * item.quantity), 0).toLocaleString()}</strong>
                   </div>
-                  <button className="btn checkout-btn" onClick={procederPago}>Proceder al pago</button>
+                  <button 
+                className="btn btn-primary proceed-payment-btn"
+                onClick={() => {
+                  setIsCartOpen(false);
+                  navigate('/checkout');
+                }}
+              >
+                Proceder a Pago
+              </button>
                 </>
               )}
             </div>
           </div>, document.body
         )}
+        {/* Footer */}
         <footer className="site-footer footer-inner">
           <small>© RetroStore 1995–2025</small>
           <div className="footer-links">
@@ -200,8 +314,6 @@ function App() {
           </div>
         </footer>
       </div>
-
-      
     );
 
   

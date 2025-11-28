@@ -1,15 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import axios from 'axios';
 
 import "../styles/productsStyles.css";
 
 interface Product {
-    id: number;
-    title: string;
-    price: number;
-    desc: string;
-    image: string;
-    category: string;
+    id_producto: number;
+    nombre: string;
+    descripcion: string;
+    precio: number;
+    stock?: number;
+    sku?: string;
+    categoria?: Categoria;
+    plataforma?: string;
+    estado?: string;
+    fotos?: string[];
+}
+
+interface Categoria {
+    id_cat: number;
+    nombre: string;
 }
 
 interface ProductsProps {
@@ -17,38 +27,47 @@ interface ProductsProps {
 }
 
 const Products: React.FC<ProductsProps> = ({ addToCart }) => {
+    const [products, setProducts] = useState<Product[]>([]);
+    const [categoria, setCategoria] = useState<Categoria[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortOrder, setSortOrder] = useState('featured');
+    const [categoryFilter, setCategoryFilter] = useState('all');
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortOrder, setSortOrder] = useState('featured');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+    useEffect(() => {
+      setLoading(true);
+      axios.get<Product[]>('http://localhost:8082/productos')
+        .then(resp => {
+          setProducts(resp.data);
+        })
+        .catch(err => {
+          console.error(err);
+          setError('No se pudieron cargar los productos');
+        })
+        .finally(() => setLoading(false));
+    }, []);
 
-    const products: Product[] = [
-        { id: 1, title: "Super Mario World (SNES)", price: 50000, desc: "Cartucho original, en buen estado.", image: "snes.jpg", category: "juegos" },
-        { id: 2, title: "Controller SNES - Repro", price: 25000, desc: "Control réplica con cable largo.", image: "controlSNES.jpg", category: "accesorios" },
-        { id: 3, title: "PlayStation 1 - Slim", price: 80000, desc: "Consola PS1 edición Slim.", image: "ps1.jpg", category: "consolas" },
-        { id: 4, title: "Polera Retro • SNES Palette", price: 25000, desc: "Polera de algodón, diseño SNES pixel art.", image: "poleraSNES.jpg", category: "merchandising" },
-        { id: 5, title: "The Legend of Zelda (N64)", price: 60000, desc: "Cartucho N64, versión completa.", image: "tlozOcarina.jpg", category: "juegos" },
-        { id: 6, title: "Game Boy Color • Bundle", price: 70000, desc: "Game Boy Color + cargador + juego.", image: "gbColor.jpg", category: "consolas" },
-        { id: 7, title: "Mega Drive — Headset", price: 150000, desc: "Auriculares retro compatibles.", image: "segaVR.jpg", category: "accesorios" },
-        { id: 8, title: "Cartucho Pokémon Snap (N64)", price: 45000, desc: "Cartucho original, probado.", image: "pokemonSnap.jpg", category: "juegos" },
-        { id: 9, title: "Pokemon Gold (GBC)", price: 55000, desc: "Cartucho Pokémon Gold para GBC.", image: "pokemonGold.jpg", category: "juegos" },
-        { id:10, title: "Pokemon Silver (GBC)", price: 55000, desc: "Cartucho Pokémon Silver para GBC.", image: "pokemonSilver.jpg", category: "juegos" },
-        { id:11, title: "Pokemon Crystal (GBC)", price: 60000, desc: "Cartucho Pokémon Crystal para GBC.", image: "pokemonCrystal.jpg", category: "juegos" },
-        { id:12, title: "The Legend of Zelda: Majora's Mask (N64)", price: 65000, desc: "Cartucho N64 en excelente estado.", image: "tlozMajorasMask.jpg", category: "juegos" },
-        { id:13, title: "Donkey Kong Country (SNES)", price: 50000, desc: "Cartucho original de Donkey Kong.", image: "dkCountry.jpg", category: "juegos" },
-        { id:14, title: "Street Fighter II (SNES)", price: 55000, desc: "Cartucho original de Street Fighter II.", image: "streetFighter2.jpg", category: "juegos" },
-        { id:15, title: "Consola Super Nintendo Entertainment System (SNES)", price: 120000, desc: "Consola SNES en buen estado de funcionamiento.", image: "consolaSnes.jpg", category: "consolas" },
-        { id:16, title: "Super Mario World (SNES)", price: 50000, desc: "Cartucho original de Super Mario World para SNES.", image: "superMarioWorld.jpg", category: "juegos" },
-    ];
+    useEffect(() => {
+      setLoading(true);
+      axios.get<Categoria[]>('http://localhost:8082/categorias')
+        .then(resp => {
+          setCategoria(resp.data);
+        })
+        .catch(err => {
+          console.error(err);
+          setError('No se pudieron cargar las categorías');
+        })
+    }, []);
 
     const filteredProducts = products
-        .filter(product => product.title.toLowerCase().includes(searchTerm.toLowerCase()))
-        .filter(product => categoryFilter === 'all' ? true : product.category === categoryFilter)
+        .filter(product => product.nombre.toLowerCase().includes(searchTerm.toLowerCase()))
+        .filter(product => categoryFilter === 'all' ? true : product.categoria?.nombre === categoryFilter)
         .sort((a, b) => {
-            if (sortOrder === 'price-asc') return a.price - b.price;
-            if (sortOrder === 'price-desc') return b.price - a.price;
+            if (sortOrder === 'price-asc') return a.precio - b.precio;
+            if (sortOrder === 'price-desc') return b.precio - a.precio;
             return 0; // Por defecto, no ordenar (destacados)
         });
 
@@ -88,10 +107,9 @@ const Products: React.FC<ProductsProps> = ({ addToCart }) => {
               onChange={(e) => setCategoryFilter(e.target.value)}
             >
               <option value="all">Todas las categorías</option>
-              <option value="juegos">Juegos</option>
-              <option value="consolas">Consolas</option>
-              <option value="accesorios">Accesorios</option>
-              <option value="merchandising">Merchandising</option>
+              {categoria.map(cat => (
+                <option key={cat.id_cat} value={cat.nombre}>{cat.nombre}</option>
+              ))}
             </select>
 
             <label htmlFor="sort">Ordenar por:</label>
@@ -109,20 +127,20 @@ const Products: React.FC<ProductsProps> = ({ addToCart }) => {
 
           <div id="products-grid" className="products-grid">
             {filteredProducts.map(product => (
-              <article key={product.id} className="product-card" data-id={product.id} data-title={product.title} data-price={product.price} data-desc={product.desc} data-image={product.image}>
-                <img src={`/images/${product.image}`} alt={product.title}/>
+              <article key={product.id_producto} className="product-card" data-id={product.id_producto} data-title={product.nombre} data-price={product.precio} data-desc={product.descripcion} data-image={product.fotos}>
+                <img src={`/images/${product.fotos && product.fotos.length ? product.fotos[0] : 'placeholder.jpg'}`} alt={product.nombre}/>
                 <div className="card-body">
-                  <h4 className="product-title">{product.title}</h4>
-                  <p className="price">${product.price.toLocaleString()}</p>
+                  <h4 className="product-title">{product.nombre}</h4>
+                  <p className="price">${product.precio.toLocaleString()}</p>
                   <div className="card-actions">
                     <button className="btn view-btn" onClick={() => openModal(product)}>Ver</button>
                     <button 
                       className="btn outline add-cart" 
                       onClick={() => addToCart({
-                        id: product.id,
-                        title: product.title,
-                        price: product.price,
-                        image: product.image
+                        id: product.id_producto,
+                        title: product.nombre,
+                        price: product.precio,
+                        image: product.fotos && product.fotos.length ? product.fotos[0] : 'placeholder.jpg'
                       })}
                     >
                       Añadir
@@ -135,13 +153,13 @@ const Products: React.FC<ProductsProps> = ({ addToCart }) => {
 
           {isModalOpen && selectedProduct && createPortal(
             (
-              <div className="modal" role="dialog" aria-modal="true" onClick={closeModal} style={{ display: 'flex' }}> {/* <- estilo necesario por alguna razon, siendo que esta aplicado en la hoja de estilos, pero sin hacerlo aqui este no aparece */}
+              <div className="modal" role="dialog" aria-modal="true" onClick={closeModal} style={{ display: 'flex' }}>
                 <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                   <button className="close" onClick={closeModal} aria-label="Cerrar">&times;</button>
-                  <img src={`/images/${selectedProduct.image}`} alt={selectedProduct.title} />
-                  <h4>{selectedProduct.title}</h4>
-                  <p>{selectedProduct.desc}</p>
-                  <p>Precio: ${selectedProduct.price.toLocaleString()}</p>
+                  <img src={`/images/${selectedProduct.fotos && selectedProduct.fotos.length ? selectedProduct.fotos[0] : 'placeholder.jpg'}`} alt={selectedProduct.nombre} />
+                  <h4>{selectedProduct.nombre}</h4>
+                  <p>{selectedProduct.descripcion}</p>
+                  <p>Precio: ${selectedProduct.precio.toLocaleString()}</p>
                 </div>
               </div>
             ),
