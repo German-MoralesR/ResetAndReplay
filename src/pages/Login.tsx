@@ -38,41 +38,30 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
+const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!validate()) return;
 
-    setLoading(true);
-    // <-- usar la ruta completa tal como la definiste en el controller (/usuarios/login)
-    axios.post(`${API_URL}/usuarios/login`, { correo: email, password })
-      .then(resp => {
-        // El controller devuelve un Usuario (no token). Ajustar comportamiento:
-        const token = resp.data.token || resp.data.accessToken;
-        if (token) {
-          localStorage.setItem("token", token);
-          localStorage.setItem("isLoggedIn", "true");
-        } else if (resp.status === 200 && resp.data && resp.data.id_usuario) {
-          // Guarda info mínima del usuario si el backend no emite token
-          localStorage.setItem("user", JSON.stringify({ id: resp.data.id_usuario, correo: resp.data.correo, nombre: resp.data.nombre }));
-          localStorage.setItem("isLoggedIn", "true");
-        } else {
-          setErrors({ login: "Respuesta inválida del servidor" });
-          return;
-        }
-        setErrors({});
-        if (onLoginSuccess) onLoginSuccess();
-        navigate("/");
-      })
-      .catch(err => {
-        console.error("Login error:", err);
-        if (err.response && err.response.status === 401) {
-          setErrors({ login: "Correo o contraseña incorrectos" });
-        } else {
-          setErrors({ login: "No se pudo conectar al servicio de usuarios" });
-        }
-      })
-      .finally(() => setLoading(false));
-  };
+  setLoading(true);
+  axios.post(`${API_URL}/usuarios/login`, { correo: email, password })
+    .then(resp => {
+      // Guardar el usuario completo con su rol
+      localStorage.setItem("user", JSON.stringify(resp.data));
+      localStorage.setItem("isLoggedIn", "true");
+      setErrors({});
+      if (onLoginSuccess) onLoginSuccess();
+      navigate("/");
+    })
+    .catch(err => {
+      console.error("Login error:", err);
+      if (err.response && err.response.status === 401) {
+        setErrors({ login: "Correo o contraseña incorrectos" });
+      } else {
+        setErrors({ login: "No se pudo conectar al servicio de usuarios" });
+      }
+    })
+    .finally(() => setLoading(false));
+};
 
   return (
     <form id="loginForm" onSubmit={handleSubmit}>

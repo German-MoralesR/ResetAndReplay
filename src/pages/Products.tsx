@@ -14,7 +14,6 @@ interface Product {
     categoria?: Categoria;
     plataforma?: string;
     estado?: string;
-    fotos?: string[];
 }
 
 interface Categoria {
@@ -36,10 +35,15 @@ const Products: React.FC<ProductsProps> = ({ addToCart }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const INVENTORY_SERVICE_URL = 'http://localhost:8082';
+
+    const getProductImageUrl = (productId: number) => {
+      return `${INVENTORY_SERVICE_URL}/productos/${productId}/foto`;
+    };
 
     useEffect(() => {
       setLoading(true);
-      axios.get<Product[]>('http://localhost:8082/productos')
+      axios.get<Product[]>(`${INVENTORY_SERVICE_URL}/productos`)
         .then(resp => {
           setProducts(resp.data);
         })
@@ -52,7 +56,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart }) => {
 
     useEffect(() => {
       setLoading(true);
-      axios.get<Categoria[]>('http://localhost:8082/categorias')
+      axios.get<Categoria[]>(`${INVENTORY_SERVICE_URL}/categorias`)
         .then(resp => {
           setCategoria(resp.data);
         })
@@ -60,6 +64,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart }) => {
           console.error(err);
           setError('No se pudieron cargar las categorías');
         })
+        .finally(() => setLoading(false));
     }, []);
 
     const filteredProducts = products
@@ -81,6 +86,10 @@ const Products: React.FC<ProductsProps> = ({ addToCart }) => {
         setIsModalOpen(false);
         setSelectedProduct(null);
     };
+
+    if (loading) return <div className="container"><p>Cargando productos...</p></div>;
+    if (error) return <div className="container"><p className="error">{error}</p></div>;
+
     return (
       <main className="container">
         <section className="products">
@@ -95,7 +104,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart }) => {
               placeholder="Buscar producto..." 
               aria-label="Buscar productos"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)} // Update search term
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
             <br />
 
@@ -117,7 +126,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart }) => {
               id="sort" 
               aria-label="Ordenar productos" 
               value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)} // Update sort order
+              onChange={(e) => setSortOrder(e.target.value)}
             >
               <option value="featured">Destacados</option>
               <option value="price-asc">Precio: bajo → alto</option>
@@ -127,8 +136,10 @@ const Products: React.FC<ProductsProps> = ({ addToCart }) => {
 
           <div id="products-grid" className="products-grid">
             {filteredProducts.map(product => (
-              <article key={product.id_producto} className="product-card" data-id={product.id_producto} data-title={product.nombre} data-price={product.precio} data-desc={product.descripcion} data-image={product.fotos}>
-                <img src={`/images/${product.fotos && product.fotos.length ? product.fotos[0] : 'placeholder.jpg'}`} alt={product.nombre}/>
+              <article key={product.id_producto} className="product-card" data-id={product.id_producto} data-title={product.nombre} data-price={product.precio} data-desc={product.descripcion}>
+                <img src={getProductImageUrl(product.id_producto)} alt={product.nombre} onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/images/placeholder.jpg';
+                }}/>
                 <div className="card-body">
                   <h4 className="product-title">{product.nombre}</h4>
                   <p className="price">${product.precio.toLocaleString()}</p>
@@ -140,7 +151,7 @@ const Products: React.FC<ProductsProps> = ({ addToCart }) => {
                         id: product.id_producto,
                         title: product.nombre,
                         price: product.precio,
-                        image: product.fotos && product.fotos.length ? product.fotos[0] : 'placeholder.jpg'
+                        image: getProductImageUrl(product.id_producto)
                       })}
                     >
                       Añadir
@@ -156,7 +167,9 @@ const Products: React.FC<ProductsProps> = ({ addToCart }) => {
               <div className="modal" role="dialog" aria-modal="true" onClick={closeModal} style={{ display: 'flex' }}>
                 <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                   <button className="close" onClick={closeModal} aria-label="Cerrar">&times;</button>
-                  <img src={`/images/${selectedProduct.fotos && selectedProduct.fotos.length ? selectedProduct.fotos[0] : 'placeholder.jpg'}`} alt={selectedProduct.nombre} />
+                  <img src={getProductImageUrl(selectedProduct.id_producto)} alt={selectedProduct.nombre} onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/images/placeholder.jpg';
+                  }} />
                   <h4>{selectedProduct.nombre}</h4>
                   <p>{selectedProduct.descripcion}</p>
                   <p>Precio: ${selectedProduct.precio.toLocaleString()}</p>

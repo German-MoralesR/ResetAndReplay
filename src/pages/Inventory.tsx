@@ -39,7 +39,6 @@ interface FormData {
   categoria?: { id_cat: number };
   estado?: { id_estado: number };
   plataforma?: { id_plat: number };
-  foto?: string;
 }
 
 const Inventory: React.FC = () => {
@@ -59,9 +58,11 @@ const Inventory: React.FC = () => {
     sku: '',
     categoria: { id_cat: 1 },
     estado: { id_estado: 1 },
-    plataforma: { id_plat: 1 },
-    foto: ''
+    plataforma: { id_plat: 1 }
   });
+
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
 
   const INVENTORY_SERVICE_URL = import.meta.env.VITE_INVENTORY_SERVICE_URL || 'http://localhost:8082';
 
@@ -125,9 +126,11 @@ const Inventory: React.FC = () => {
         sku: producto.sku,
         categoria: producto.categoria ? { id_cat: producto.categoria.id_cat } : { id_cat: 1 },
         estado: producto.estado ? { id_estado: producto.estado.id_estado } : { id_estado: 1 },
-        plataforma: producto.plataforma ? { id_plat: producto.plataforma.id_plat } : { id_plat: 1 },
-        foto: producto.foto || ''
+        plataforma: producto.plataforma ? { id_plat: producto.plataforma.id_plat } : { id_plat: 1 }
       });
+      // Mostrar preview de la imagen desde el endpoint BLOB
+      setPreviewUrl(`${INVENTORY_SERVICE_URL}/productos/${producto.id_producto}/foto`);
+      setSelectedFile(null);
     } else {
       setEditingId(null);
       setFormData({
@@ -138,9 +141,10 @@ const Inventory: React.FC = () => {
         sku: '',
         categoria: { id_cat: categorias[0]?.id_cat || 1 },
         estado: { id_estado: estados[0]?.id_estado || 1 },
-        plataforma: { id_plat: plataformas[0]?.id_plat || 1 },
-        foto: ''
+        plataforma: { id_plat: plataformas[0]?.id_plat || 1 }
       });
+      setSelectedFile(null);
+      setPreviewUrl('');
     }
     setIsModalOpen(true);
   };
@@ -148,6 +152,21 @@ const Inventory: React.FC = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingId(null);
+    setSelectedFile(null);
+    setPreviewUrl('');
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      // Crear preview de la imagen LOCAL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -185,13 +204,24 @@ const Inventory: React.FC = () => {
     }
 
     try {
+      const formDataMultipart = new FormData();
+      formDataMultipart.append('producto', new Blob([JSON.stringify(formData)], { type: 'application/json' }));
+      
+      if (selectedFile) {
+        formDataMultipart.append('file', selectedFile);
+      }
+
       if (editingId) {
         // Actualizar producto
-        await axios.put(`${INVENTORY_SERVICE_URL}/productos/${editingId}`, formData);
+        await axios.put(`${INVENTORY_SERVICE_URL}/productos/${editingId}`, formDataMultipart, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
         console.log('Producto actualizado');
       } else {
         // Crear producto
-        await axios.post(`${INVENTORY_SERVICE_URL}/productos`, formData);
+        await axios.post(`${INVENTORY_SERVICE_URL}/productos`, formDataMultipart, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
         console.log('Producto creado');
       }
       handleCloseModal();
@@ -417,15 +447,20 @@ const Inventory: React.FC = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="foto">URL Foto</label>
+                <label htmlFor="foto">Imagen del Producto</label>
+                {previewUrl && (
+                  <div style={{ marginBottom: '10px' }}>
+                    <img src={previewUrl} alt="Preview" style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '8px' }} />
+                  </div>
+                )}
                 <input
                   id="foto"
-                  type="text"
+                  type="file"
                   name="foto"
-                  value={formData.foto}
-                  onChange={handleInputChange}
-                  placeholder="URL de la imagen"
+                  onChange={handleFileChange}
+                  accept="image/*"
                 />
+                <small>Selecciona una imagen JPG o PNG</small>
               </div>
 
               <div className="form-actions">
