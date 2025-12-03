@@ -31,15 +31,25 @@ interface ProfileProps {
   userId?: number;
 }
 
+interface Resena {
+  id: number;
+  idProducto: number;
+  idUsuario: number;
+  texto: string;
+  calificacion: number;
+  fecha: string;
+}
+
 const Profile: React.FC<ProfileProps> = ({ userId }) => {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [ventas, setVentas] = useState<Venta[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'info' | 'historial'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'historial' | 'resenas'>('info');
 
   const USER_SERVICE_URL = import.meta.env.VITE_USER_SERVICE_URL || "http://localhost:8081";
   const SALES_SERVICE_URL = import.meta.env.VITE_SALES_SERVICE_URL || "http://localhost:8083";
+  const REVIEWS_SERVICE_URL = import.meta.env.VITE_REVIEWS_SERVICE_URL || "http://localhost:8084";
   const navigate = useNavigate();
 
   const rawUser = (() => {
@@ -53,20 +63,180 @@ const Profile: React.FC<ProfileProps> = ({ userId }) => {
   const extractedId = (rawUser && (rawUser.id_usuario ?? rawUser.id ?? rawUser?.idUsuario)) ?? null;
   const currentUserId = userId ?? extractedId;
 
-  // Función para parsear fechas en formato PostgreSQL
-  const formatDate = (dateStr: string): string => {
-    try {
-      const date = new Date(dateStr.replace(' ', 'T'));
-      return date.toLocaleString('es-ES', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
+  // Modal de reseña
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [selectedProductForReview, setSelectedProductForReview] = useState<Producto | null>(null);
+  const [reviewForm, setReviewForm] = useState<{ calificacion: number; texto: string }>({ calificacion: 5, texto: '' });
+  const [existingReview, setExistingReview] = useState<Resena | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+
+  // Nuevo: mapa de reseñas del usuario por producto y modo del modal
+  const [userReviews, setUserReviews] = useState<Record<number, Resena>>({});
+  const [modalMode, setModalMode] = useState<'view' | 'edit' | 'create'>('create');
+
+  // Helper para obtener URL de la imagen del producto
+  const INVENTORY_SERVICE_URL = import.meta.env.VITE_INVENTORY_SERVICE_URL || 'http://localhost:8082';
+  const getProductImageUrl = (productId: number) => `${INVENTORY_SERVICE_URL}/productos/${productId}/foto`;
+
+  // Cargar reseñas del usuario al montar / cuando cambien ventas / usuario
+  useEffect(() => {
+    if (!currentUserId) return;
+    const fetchUserReviews = async () => {
+      try {
+        const url = `${REVIEWS_SERVICE_URL}/resenas/usuario/${currentUserId}`;
+        const resp = await axios.get<Resena[]>(url);
+        const map: Record<number, Resena> = {};
+        resp.data.forEach(r => { map[r.idProducto] = r; });
+        setUserReviews(map);
+      } catch (err) {
+        // silencioso: puede no tener reseñas
+        setUserReviews({});
+      }
+    };
+    fetchUserReviews();
+  }, [currentUserId, REVIEWS_SERVICE_URL, ventas.length]);
+
+  // Extraer productos comprados desde ventas (detalles)
+  const productosComprados: Producto[] = React.useMemo(() => {
+    const map = new Map<number, Producto>();
+    ventas.forEach(v => {
+      (v.detalles || []).forEach((p: Producto) => {
+        if (p && !map.has(p.id_producto)) {
+          map.set(p.id_producto, p);
+        }
       });
-    } catch {
-      return dateStr;
+    });
+    return Array.from(map.values());
+  }, [ventas]);
+
+  // Abrir modal para crear/editar/ver reseña para un producto
+  const openReviewModal = async (product: Producto) => {
+    if (!currentUserId) {
+      setReviewError('No hay usuario autenticado.');
+      return;
+    }
+    setSelectedProductForReview(product);
+    setReviewLoading(true);
+    setReviewError(null);
+    setExistingReview(null);
+    setReviewForm({ calificacion: 5, texto: '' });
+
+    // Si ya tenemos la reseña en el mapa, usarla inmediatamente
+    const cached = userReviews[product.id_producto];
+    if (cached) {
+      setExistingReview(cached);
+      setReviewForm({ calificacion: cached.calificacion || 5, texto: cached.texto || '' });
+      setModalMode('view'); // ver reseña al abrir si ya existe
+      setReviewLoading(false);
+      setIsReviewModalOpen(true);
+      return;
+    }
+
+    // Si no está en el mapa, intentar obtenerla (fallback)
+    try {
+      const url = `${REVIEWS_SERVICE_URL}/resenas/producto/${product.id_producto}/usuario/${currentUserId}`;
+      const resp = await axios.get<Resena>(url);
+      if (resp.status === 200 && resp.data) {
+        setExistingReview(resp.data);
+        setUserReviews(prev => ({ ...prev, [product.id_producto]: resp.data }));
+        setReviewForm({ calificacion: resp.data.calificacion || 5, texto: resp.data.texto || '' });
+        setModalMode('view');
+      } else {
+        setModalMode('create');
+      }
+    } catch (err: any) {
+      if (!(err.response && err.response.status === 404)) {
+        console.error('Error al obtener reseña existente:', err);
+        setReviewError('No se pudo cargar la reseña existente.');
+      }
+      setModalMode('create');
+    } finally {
+      setReviewLoading(false);
+      setIsReviewModalOpen(true);
+    }
+  };
+
+  const closeReviewModal = () => {
+    setIsReviewModalOpen(false);
+    setSelectedProductForReview(null);
+    setExistingReview(null);
+    setReviewForm({ calificacion: 5, texto: '' });
+    setReviewError(null);
+    setModalMode('create');
+  };
+
+  const handleReviewChange = (field: 'calificacion' | 'texto', value: any) => {
+    setReviewForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const submitReview = async () => {
+    if (!selectedProductForReview || !currentUserId) return;
+    if (reviewForm.calificacion < 1 || reviewForm.calificacion > 5) {
+      setReviewError('La calificación debe estar entre 1 y 5.');
+      return;
+    }
+    setReviewLoading(true);
+    setReviewError(null);
+
+    try {
+      if (existingReview && modalMode === 'edit') {
+        // Editar
+        const url = `${REVIEWS_SERVICE_URL}/resenas/${existingReview.id}`;
+        const body = { texto: reviewForm.texto, calificacion: reviewForm.calificacion };
+        const resp = await axios.put<Resena>(url, body);
+        // Actualizar mapa local con la reseña guardada
+        setUserReviews(prev => ({ ...prev, [selectedProductForReview.id_producto]: resp.data }));
+      } else {
+        // Crear
+        const url = `${REVIEWS_SERVICE_URL}/resenas`;
+        const body = {
+          idProducto: selectedProductForReview.id_producto,
+          idUsuario: currentUserId,
+          texto: reviewForm.texto,
+          calificacion: reviewForm.calificacion
+        };
+        const resp = await axios.post<Resena>(url, body);
+        // Añadir la nueva reseña al mapa local
+        setUserReviews(prev => ({ ...prev, [selectedProductForReview.id_producto]: resp.data }));
+      }
+      // Cambiar a modo ver reseña después de crear/editar
+      setExistingReview(userReviews[selectedProductForReview.id_producto] || null);
+      setModalMode('view');
+      // cerrar modal opcional o mantener abierto en modo ver
+      setIsReviewModalOpen(false);
+    } catch (err: any) {
+      console.error('Error al enviar reseña:', err);
+      if (err.response && err.response.status === 409) {
+        setReviewError('Ya existe una reseña para este producto por este usuario.');
+      } else {
+        setReviewError('Error al guardar la reseña.');
+      }
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  const deleteReview = async () => {
+    const reviewToDelete = existingReview || (selectedProductForReview && userReviews[selectedProductForReview.id_producto]);
+    if (!reviewToDelete) return;
+    setReviewLoading(true);
+    setReviewError(null);
+    try {
+      const url = `${REVIEWS_SERVICE_URL}/resenas/${reviewToDelete.id}`;
+      await axios.delete(url);
+      // Remover del mapa local
+      setUserReviews(prev => {
+        const copy = { ...prev };
+        delete copy[reviewToDelete.idProducto];
+        return copy;
+      });
+      closeReviewModal();
+    } catch (err) {
+      console.error('Error al eliminar reseña:', err);
+      setReviewError('No se pudo eliminar la reseña.');
+    } finally {
+      setReviewLoading(false);
     }
   };
 
@@ -145,6 +315,18 @@ const Profile: React.FC<ProfileProps> = ({ userId }) => {
   if (error) return <div className="container"><p className="mensajeError">{error}</p></div>;
   if (!usuario) return <div className="container"><p>Usuario no encontrado</p></div>;
 
+  // Util para formatear fechas (compatible con ISO y LocalDateTime)
+  function formatDate(value?: string | null) {
+    if (!value) return '';
+    try {
+      const d = new Date(value);
+      if (isNaN(d.getTime())) return value;
+      return d.toLocaleString();
+    } catch {
+      return value;
+    }
+  }
+
   return (
     <main className="container profile-page">
       <section className="profile-header">
@@ -172,6 +354,12 @@ const Profile: React.FC<ProfileProps> = ({ userId }) => {
           onClick={() => setActiveTab('historial')}
         >
           Historial de Compras ({ventas.length})
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'resenas' ? 'active' : ''}`}
+          onClick={() => setActiveTab('resenas')}
+        >
+          Reseñar productos
         </button>
       </section>
 
@@ -222,6 +410,130 @@ const Profile: React.FC<ProfileProps> = ({ userId }) => {
             </div>
           )}
         </section>
+      )}
+
+      {activeTab === 'resenas' && (
+        <section className="purchased-products">
+          <h2>Reseñar productos</h2>
+          {productosComprados.length === 0 ? (
+            <p>No se encontraron productos en tus compras.</p>
+          ) : (
+            <ul className="purchased-list">
+              {productosComprados.map(prod => {
+                const hasReview = !!userReviews[prod.id_producto];
+                return (
+                  <li key={prod.id_producto} className="purchased-item" style={{display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid #eee'}}>
+                    <img
+                      src={getProductImageUrl(prod.id_producto)}
+                      alt={prod.nombre}
+                      style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 6, background: '#f6f6f6' }}
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                    />
+                    <div style={{flex: 1}}>
+                      <div style={{fontWeight: 600}}>{prod.nombre}</div>
+                      <div style={{color: '#666'}}>${prod.precio.toLocaleString()}</div>
+                    </div>
+                    <div>
+                      <button
+                        className="btn btn-sm"
+                        onClick={() => openReviewModal(prod)}
+                      >
+                        {hasReview ? 'Ver reseña' : 'Calificar producto'}
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      )}
+
+      {/* Modal para reseñas: ahora soporta view / edit / create */}
+      {isReviewModalOpen && selectedProductForReview && (
+        <div className="modal-overlay" onClick={closeReviewModal} style={{background: 'rgba(0,0,0,0.4)'}}>
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{ backgroundColor: '#fff', color: '#111', padding: 20, maxWidth: 640, width: '90%', borderRadius: 8, boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}
+          >
+            <button className="modal-close" onClick={closeReviewModal} style={{float: 'right', border: 'none', background: 'transparent', fontSize: 22}}>&times;</button>
+            <h3 style={{marginTop: 0}}>
+              {modalMode === 'view' ? 'Reseña' : modalMode === 'edit' ? 'Editar reseña' : 'Calificar producto'}
+            </h3>
+            <p><strong>{selectedProductForReview.nombre}</strong></p>
+
+            {reviewError && <p className="mensajeError">{reviewError}</p>}
+
+            {modalMode === 'view' && (userReviews[selectedProductForReview.id_producto] || existingReview) && (
+              <>
+                {(() => {
+                  const r = userReviews[selectedProductForReview.id_producto] || existingReview!;
+                  return (
+                    <div>
+                      <div style={{display: 'flex', gap: 8, alignItems: 'center', margin: '8px 0'}}>
+                        {[1,2,3,4,5].map(n => (
+                          <span key={n} style={{color: n <= r.calificacion ? '#f5b301' : '#ddd', fontSize: 20}}>★</span>
+                        ))}
+                      </div>
+                      <p style={{whiteSpace: 'pre-wrap', marginTop: 8}}>{r.texto || <em>Sin texto</em>}</p>
+
+                      <div style={{display: 'flex', gap: 8, marginTop: 12}}>
+                        <button className="btn btn-primary" onClick={() => { setModalMode('edit'); setExistingReview(r); setReviewForm({ calificacion: r.calificacion, texto: r.texto }); }}>
+                          Editar
+                        </button>
+                        <button className="btn btn-danger" onClick={deleteReview} disabled={reviewLoading}>
+                          Borrar
+                        </button>
+                        <button className="btn btn-outline" onClick={closeReviewModal}>Cerrar</button>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
+            )}
+
+            {(modalMode === 'edit' || modalMode === 'create') && (
+              <>
+                <div className="form-group" style={{marginTop: 8}}>
+                  <label>Calificación:</label>
+                  <div className="stars" style={{display: 'flex', gap: 6, marginTop: 6}}>
+                    {[1,2,3,4,5].map(n => (
+                      <button
+                        key={n}
+                        type="button"
+                        className={n <= reviewForm.calificacion ? 'star active' : 'star'}
+                        onClick={() => handleReviewChange('calificacion', n)}
+                        aria-label={`Dar ${n} estrellas`}
+                        style={{fontSize: 20, background: 'transparent', border: 'none', cursor: 'pointer', color: n <= reviewForm.calificacion ? '#f5b301' : '#ccc'}}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="form-group" style={{marginTop: 12}}>
+                  <label>Reseña:</label>
+                  <textarea
+                    value={reviewForm.texto}
+                    onChange={(e) => handleReviewChange('texto', e.target.value)}
+                    rows={4}
+                    placeholder="Escribe tu reseña..."
+                    style={{width: '100%', padding: 8, borderRadius: 6, border: '1px solid #ddd', background: '#fff'}}
+                  />
+                </div>
+
+                <div className="modal-actions" style={{display: 'flex', gap: 8, marginTop: 12}}>
+                  <button className="btn btn-primary" onClick={submitReview} disabled={reviewLoading}>
+                    {modalMode === 'edit' ? 'Guardar cambios' : 'Enviar reseña'}
+                  </button>
+                  <button className="btn btn-outline" onClick={closeReviewModal}>Cancelar</button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       )}
     </main>
   );

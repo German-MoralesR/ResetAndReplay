@@ -1,34 +1,29 @@
-// ...existing code...
 import React, { useState, type FormEvent } from 'react';
+import axios from 'axios';
 import '../styles/contactStyles.css';
 
 const Contacto: React.FC = () => {
-    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
     const [response, setResponse] = useState('');
     const [responseColor, setResponseColor] = useState('');
+    const [loading, setLoading] = useState(false);
 
     // nuevo estado para errores por campo
     const [errors, setErrors] = useState({
-        name: '',
         email: '',
         message: ''
     });
 
-    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    const REVIEWS_SERVICE_URL = import.meta.env.VITE_REVIEWS_SERVICE_URL || 'http://localhost:8084';
+
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const n = name.trim();
         const em = email.trim();
         const msg = message.trim();
 
-        const newErrors = { name: '', email: '', message: '' };
+        const newErrors = { email: '', message: '' };
         let valid = true;
-
-        if (n.length < 3 || n.length > 50) {
-            newErrors.name = 'El nombre debe tener entre 3 y 50 caracteres';
-            valid = false;
-        }
 
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
             newErrors.email = 'Ingresa un correo válido (usuario@dominio.com)';
@@ -43,12 +38,26 @@ const Contacto: React.FC = () => {
         setErrors(newErrors);
 
         if (valid) {
-            setResponse(`¡Gracias por tu mensaje, ${n}! Lo hemos recibido correctamente.`);
-            setResponseColor('var(--accent-1)');
-            setName('');
-            setEmail('');
-            setMessage('');
-            setErrors({ name: '', email: '', message: '' });
+            setLoading(true);
+            try {
+                const payload = {
+                    correo: em,
+                    mensaje: msg
+                };
+                await axios.post(`${REVIEWS_SERVICE_URL}/contactos`, payload);
+                
+                setResponse(`¡Gracias por tu mensaje! Lo hemos recibido correctamente.`);
+                setResponseColor('var(--accent-1)');
+                setEmail('');
+                setMessage('');
+                setErrors({ email: '', message: '' });
+            } catch (err: any) {
+                console.error('Error al enviar contacto:', err);
+                setResponse('Error al enviar el mensaje. Por favor intenta más tarde.');
+                setResponseColor('var(--accent-3)');
+            } finally {
+                setLoading(false);
+            }
         } else {
             setResponse('');
             setResponseColor('var(--accent-3)');
@@ -60,17 +69,6 @@ const Contacto: React.FC = () => {
             <section id="contact" className="section">
                 <h2>Contacto</h2>
                 <form id="contact-form" className="contact-form" onSubmit={handleSubmit}>
-                    <label htmlFor="name">Nombre:</label>
-                    <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        placeholder="Ingresa tu nombre"
-                        value={name}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-                    />
-                    {errors.name && <div className="mensajeError">{errors.name}</div>}
-
                     <label htmlFor="email">Correo electrónico:</label>
                     <input
                         type="email"
@@ -93,7 +91,9 @@ const Contacto: React.FC = () => {
                     />
                     {errors.message && <div className="mensajeError">{errors.message}</div>}
 
-                    <button type="submit" className="btn">Enviar</button>
+                    <button type="submit" className="btn" disabled={loading}>
+                        {loading ? 'Enviando...' : 'Enviar'}
+                    </button>
                 </form>
                 <p id="form-response" className="form-response" style={{ color: responseColor }}>
                     {response}
@@ -104,4 +104,3 @@ const Contacto: React.FC = () => {
 }
 
 export default Contacto;
-// ...existing code...

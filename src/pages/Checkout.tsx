@@ -57,7 +57,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onCheckoutSuccess }) => {
         estado: 'pendiente'
       };
 
-      console.log('Enviando compra:', payload);
+      console.log('Enviando compra:', JSON.stringify(payload, null, 2));
 
       // POST a /compras para crear la compra
       const resp = await axios.post(`${SALES_SERVICE_URL}/compras`, payload);
