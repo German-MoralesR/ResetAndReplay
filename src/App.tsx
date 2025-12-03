@@ -80,12 +80,24 @@ function App() {
       const raw = localStorage.getItem('user');
       if (!raw) return false;
       const u = JSON.parse(raw);
-      
-      // Acceder al id_rol desde el objeto rol
-      const roleId = u?.rol?.id_rol;
-      console.log('DEBUG: u =', u, 'roleId =', roleId);
-      
-      return Number(roleId) === 1; // id_rol === 1 es admin
+
+      const rol = u?.rol;
+      // 1) si rol es string: "ADMIN" o "ROLE_ADMIN"
+      if (typeof rol === 'string') {
+        return rol.toUpperCase().includes('ADMIN');
+      }
+      // 2) si rol es número directo
+      if (typeof rol === 'number') {
+        return Number(rol) === 1;
+      }
+      // 3) si rol es objeto: buscar id o nombre
+      const roleId = rol?.id_rol ?? rol?.id ?? rol?.idRol;
+      if (roleId != null) return Number(roleId) === 1;
+
+      const roleName = (rol?.nombre ?? rol?.name ?? '').toString();
+      if (roleName) return roleName.toUpperCase().includes('ADMIN');
+
+      return false;
     } catch (e) {
       console.error('Error en getIsAdminFromStorage:', e);
       return false;

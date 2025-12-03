@@ -9,15 +9,12 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState<{ email?: string; password?: string; login?: string }>({});
-
-  // MOVER: estado de carga y URL del servicio al nivel del componente
-  const [loading, setLoading] = useState(false);
-  const API_URL = "http://localhost:8081";
-
-  const navigate = useNavigate();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [errors, setErrors] = useState<{ email?: string; password?: string; login?: string }>({});
+    const [loading, setLoading] = useState(false);
+    const API_URL = "http://localhost:8081";
+    const navigate = useNavigate();
 
   const validate = (): boolean => {
     const newErrors: { email?: string; password?: string } = {};
@@ -38,30 +35,44 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-const handleSubmit = (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!validate()) return;
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
 
-  setLoading(true);
-  axios.post(`${API_URL}/usuarios/login`, { correo: email, password })
-    .then(resp => {
-      // Guardar el usuario completo con su rol
-      localStorage.setItem("user", JSON.stringify(resp.data));
-      localStorage.setItem("isLoggedIn", "true");
-      setErrors({});
-      if (onLoginSuccess) onLoginSuccess();
-      navigate("/");
-    })
-    .catch(err => {
-      console.error("Login error:", err);
-      if (err.response && err.response.status === 401) {
-        setErrors({ login: "Correo o contraseña incorrectos" });
-      } else {
-        setErrors({ login: "No se pudo conectar al servicio de usuarios" });
-      }
-    })
-    .finally(() => setLoading(false));
-};
+    setLoading(true);
+    axios.post(`${API_URL}/usuarios/login`, { correo: email, password })
+      .then(resp => {
+        // Resp expected: { token: "...", usuario: { id_usuario: ..., correo: ..., rol: ... } }
+        const data = resp.data || {};
+        const token = data.token || data?.authToken || null;
+        // obtener el objeto usuario (puede venir en data.usuario)
+        const usuario = data.usuario || data.user || data;
+
+        if (token && usuario) {
+          localStorage.setItem("token", token);
+          localStorage.setItem("user", JSON.stringify(usuario)); // guardar SOLO el usuario
+          localStorage.setItem("isLoggedIn", "true");
+        } else {
+          // fallback: si backend devolvió forma distinta, intenta guardar lo mínimo
+          localStorage.setItem("user", JSON.stringify(data.usuario ?? data));
+          if (data.token) localStorage.setItem("token", data.token);
+          localStorage.setItem("isLoggedIn", "true");
+        }
+
+        setErrors({});
+        if (onLoginSuccess) onLoginSuccess();
+        navigate("/");
+      })
+      .catch(err => {
+        console.error("Login error:", err);
+        if (err.response && err.response.status === 401) {
+          setErrors({ login: "Correo o contraseña incorrectos" });
+        } else {
+          setErrors({ login: "No se pudo conectar al servicio de usuarios" });
+        }
+      })
+      .finally(() => setLoading(false));
+  };
 
   return (
     <form id="loginForm" onSubmit={handleSubmit}>
