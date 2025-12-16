@@ -12,6 +12,7 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Login from "./pages/Login";
 import SignIn from "./pages/SignIn";
+import ForgotPassword from "./pages/ForgotPassword";
 import Contact from "./pages/Contact";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import Profile from './pages/Profile';
@@ -262,6 +263,7 @@ function App() {
                                   }
           />
           <Route path="/signin" element={<SignIn />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/CheckoutSuccess" element={<CheckoutSuccess />} />
           <Route path="/profile" element={<Profile />} />

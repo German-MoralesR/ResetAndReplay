@@ -3,13 +3,23 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import "../styles/signInStyles.css";
 
+const securityQuestions = [
+  "¿Nombre de tu primera mascota?",
+  "¿Ciudad donde naciste?",
+  "¿Nombre de tu mejor amigo de la infancia?",
+  "¿Cuál es tu comida favorita?",
+  "¿Cuál es el nombre de tu escuela primaria?"
+];
+
 const SignIn: React.FC = () => {
   const [formData, setFormData] = useState({
     nombre: '',
     correo: '',
     password: '',
     cPassword: '',
-    telefono: ''
+    telefono: '',
+    securityQuestion: '',
+    securityAnswer: ''
   });
 
   const [errors, setErrors] = useState({
@@ -18,6 +28,8 @@ const SignIn: React.FC = () => {
     password: '',
     cPassword: '',
     telefono: '',
+    securityQuestion: '',
+    securityAnswer: '',
     submit: ''
   });
 
@@ -25,7 +37,7 @@ const SignIn: React.FC = () => {
   const API_URL = "http://localhost:8081";
   const navigate = useNavigate();
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
     // Limpiar números para el campo teléfono
@@ -93,6 +105,25 @@ const SignIn: React.FC = () => {
       newErrors.telefono = '';
     }
 
+    // Validar pregunta de seguridad
+    if (!formData.securityQuestion) {
+      newErrors.securityQuestion = 'Debes seleccionar una pregunta de seguridad';
+      todoOk = false;
+    } else {
+      newErrors.securityQuestion = '';
+    }
+
+    // Validar respuesta de seguridad
+    if (!formData.securityAnswer.trim()) {
+      newErrors.securityAnswer = 'Debes proporcionar una respuesta a la pregunta de seguridad';
+      todoOk = false;
+    } else if (formData.securityAnswer.trim().length < 2) {
+      newErrors.securityAnswer = 'La respuesta debe tener al menos 2 caracteres';
+      todoOk = false;
+    } else {
+      newErrors.securityAnswer = '';
+    }
+
     setErrors(newErrors);
 
     if (todoOk) {
@@ -106,7 +137,9 @@ const SignIn: React.FC = () => {
       nombre: formData.nombre,
       correo: formData.correo,
       password: formData.password,
-      telefono: formData.telefono || null
+      telefono: formData.telefono || null,
+      securityQuestion: formData.securityQuestion,
+      securityAnswer: formData.securityAnswer.trim()
     };
 
     axios.post(`${API_URL}/usuarios`, payload)
@@ -119,7 +152,9 @@ const SignIn: React.FC = () => {
           correo: '',
           password: '',
           cPassword: '',
-          telefono: ''
+          telefono: '',
+          securityQuestion: '',
+          securityAnswer: ''
         });
         navigate("/login");
       })
@@ -204,6 +239,35 @@ const SignIn: React.FC = () => {
             autoComplete="tel"
           />
           {errors.telefono && <div className="mensajeError">{errors.telefono}</div>}
+        </div>
+
+        <div className="form-input">
+          <label htmlFor="securityQuestion">Pregunta de Seguridad</label>
+          <select
+            id="securityQuestion"
+            name="securityQuestion"
+            value={formData.securityQuestion}
+            onChange={handleInputChange}
+          >
+            <option value="">Selecciona una pregunta</option>
+            {securityQuestions.map((question, index) => (
+              <option key={index} value={question}>{question}</option>
+            ))}
+          </select>
+          {errors.securityQuestion && <div className="mensajeError">{errors.securityQuestion}</div>}
+        </div>
+
+        <div className="form-input">
+          <label htmlFor="securityAnswer">Respuesta de Seguridad</label>
+          <input
+            id="securityAnswer"
+            type="text"
+            name="securityAnswer"
+            value={formData.securityAnswer}
+            onChange={handleInputChange}
+            placeholder="Tu respuesta"
+          />
+          {errors.securityAnswer && <div className="mensajeError">{errors.securityAnswer}</div>}
         </div>
 
         {errors.submit && <div className="mensajeError text-center">{errors.submit}</div>}

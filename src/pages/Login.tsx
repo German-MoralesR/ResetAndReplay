@@ -88,7 +88,6 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           onChange={(e) => setEmail(e.target.value)}
         />
         {errors.email && <div className="invalid-feedback">{errors.email}</div>}
-        <p className="mensajeError"></p>
       </div>
 
       <div className="form-input password">
@@ -101,12 +100,12 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           onChange={(e) => setPassword(e.target.value)}
         />
         {errors.password && <div className="invalid-feedback">{errors.password}</div>}
-        <p className="mensajeError"></p>
       </div>
       {errors.login && <p className="text-danger text-center">{errors.login}</p>}
 
       <button type="submit" disabled={loading}>{loading ? "Ingresando..." : "Ingresar"}</button>
       <Link to="/signin" className="btn btn-primary volver-btn" role="button">Registrarse</Link>
+      <Link to="/forgot-password" className="forgot-password-link">¿Olvidaste tu contraseña?</Link>
     </form>
   );
 }

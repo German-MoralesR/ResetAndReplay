@@ -62,6 +62,7 @@ const Profile: React.FC<ProfileProps> = ({ userId }) => {
 
   const extractedId = (rawUser && (rawUser.id_usuario ?? rawUser.id ?? rawUser?.idUsuario)) ?? null;
   const currentUserId = userId ?? extractedId;
+  const token = localStorage.getItem('token');
 
   // Modal de reseña
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -258,14 +259,18 @@ const Profile: React.FC<ProfileProps> = ({ userId }) => {
 
         // Obtener datos del usuario
         const userUrl = `${USER_SERVICE_URL}/usuarios/${currentUserId}`;
-        const userResp = await axios.get<Usuario>(userUrl);
+        const userResp = await axios.get<Usuario>(userUrl, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         if (!isMounted) return;
         console.log('Usuario obtenido:', userResp.data);
         setUsuario(userResp.data);
 
         // Obtener historial de compras
         const ventasUrl = `${SALES_SERVICE_URL}/compras/usuario/${currentUserId}`;
-        const ventasResp = await axios.get<Venta[]>(ventasUrl);
+        const ventasResp = await axios.get<Venta[]>(ventasUrl, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         if (!isMounted) return;
         console.log('Ventas obtenidas:', ventasResp.data);
         setVentas(ventasResp.data || []);
